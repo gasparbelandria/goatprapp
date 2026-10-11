@@ -261,7 +261,7 @@ function NotificationItem({ notification, onResolved }: { notification: AppNotif
 
 // ── Bell button + panel ───────────────────────────────────────────────────────
 
-export function NotificationBell({ large = false }: { large?: boolean }) {
+export function NotificationBell({ large = false, align = "left" }: { large?: boolean; align?: "left" | "right" }) {
   const { t } = useI18n();
   const { notifications, unreadCount, markAllRead, refresh } = useNotifications();
   const [open, setOpen] = useState(false);
@@ -302,7 +302,7 @@ export function NotificationBell({ large = false }: { large?: boolean }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-10 w-80 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+        <div className={`absolute ${align === "right" ? "right-0" : "left-0"} top-10 w-80 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden`}>
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <span className="text-xs font-black uppercase tracking-widest text-foreground">

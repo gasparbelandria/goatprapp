@@ -30,7 +30,7 @@ export function TopBar({ title, showLogo = false }: TopBarProps) {
         </h1>
       )}
       <div className="flex items-center gap-3">
-        <NotificationBell />
+        <NotificationBell align="right" />
         {user && (
           <Link href={profileHref}>
             {user.avatarUrl && !avatarErr ? (
