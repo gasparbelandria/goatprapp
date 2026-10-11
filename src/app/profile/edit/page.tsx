@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2, CheckCircle2, ArrowLeft, Camera, School, Check, X, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, ArrowLeft, Camera, School, Check, X, AlertCircle, LogOut } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -54,6 +54,13 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+    router.replace("/login");
+  };
 
   const displayAvatarUrl = uploadedAvatarUrl ?? user?.avatarUrl ?? null;
 
@@ -387,6 +394,15 @@ export default function EditProfilePage() {
               "Save changes"
             )}
           </Button>
+
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-sm font-bold text-muted hover:text-danger hover:border-danger/40 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {loggingOut ? <Loader2 size={15} className="animate-spin" /> : <LogOut size={15} />}
+            Log out
+          </button>
         </div>
       </main>
       <BottomNav />
