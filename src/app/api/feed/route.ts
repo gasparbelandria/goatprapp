@@ -27,12 +27,13 @@ export async function GET(req: NextRequest) {
 
   const feedUserIds = [userId, ...(following ?? []).map((f) => f.following_id)];
 
-  // Fetch recent records
+  // Fetch recent records:
+  // - public records from anyone
+  // - friends records only from followed users (+ self)
   let recQuery = supabase
     .from("pr_records")
     .select("id, value, unit, notes, media_url, media_type, recorded_at, visibility, created_at, user_id, exercise_id")
-    .in("user_id", feedUserIds)
-    .in("visibility", ["public", "friends"])
+    .or(`visibility.eq.public,and(visibility.eq.friends,user_id.in.(${feedUserIds.join(",")}))`)
     .order("created_at", { ascending: false })
     .limit(PAGE_SIZE);
 
