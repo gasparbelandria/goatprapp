@@ -97,7 +97,7 @@ const es: Translations = {
     signupLink: "Regístrate",
     hasAccount: "¿Ya tienes cuenta?",
     loginLink: "Iniciar sesión",
-    errorGis: "Google sign-in no listo. Verifica tu Client ID en .env.local.",
+    errorGis: "Google sign-in no está disponible. Intenta de nuevo más tarde.",
     errorCancelled: "Se canceló el inicio de sesión con Google.",
     errorGeneric: "Algo salió mal.",
   },

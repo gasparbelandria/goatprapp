@@ -95,7 +95,7 @@ const en = {
     signupLink: "Sign up",
     hasAccount: "Already have an account?",
     loginLink: "Log in",
-    errorGis: "Google sign-in not ready. Check your Client ID in .env.local.",
+    errorGis: "Google sign-in is unavailable. Please try again later.",
     errorCancelled: "Google sign-in was cancelled.",
     errorGeneric: "Something went wrong.",
   },
