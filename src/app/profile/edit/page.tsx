@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2, CheckCircle2, ArrowLeft, Camera, School, Check, X, AlertCircle, LogOut } from "lucide-react";
+import { Loader2, CheckCircle2, ArrowLeft, Camera, Check, X, AlertCircle, LogOut } from "lucide-react";
+import { SchoolPicker } from "@/components/ui/SchoolPicker";
 import { cn } from "@/lib/cn";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -49,6 +50,8 @@ export default function EditProfilePage() {
   // Profile fields
   const [bio, setBio] = useState("");
   const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [detectedState, setDetectedState] = useState<string | null>(null);
   const [currentSchool, setCurrentSchool] = useState<SchoolType | null>(null);
 
   const [saving, setSaving] = useState(false);
@@ -71,12 +74,21 @@ export default function EditProfilePage() {
     Promise.all([
       fetch("/api/profile/update").then((r) => r.ok ? r.json() : null),
       fetch(`/api/users/${user.username}`).then((r) => r.ok ? r.json() : null),
-    ]).then(([profileData, userData]) => {
+      fetch("/api/geo/state").then((r) => r.ok ? r.json() : null),
+    ]).then(([profileData, userData, geoData]) => {
       if (profileData) {
         setBio(profileData.bio ?? "");
         setCity(profileData.city ?? "");
+        setState(profileData.state ?? "");
       }
       if (userData?.school) setCurrentSchool(userData.school);
+      if (geoData?.state) {
+        setDetectedState(geoData.state);
+        // Only auto-fill if no school and no saved state
+        if (!userData?.school && !profileData?.state) {
+          setState(geoData.state);
+        }
+      }
     }).finally(() => setLoaded(true));
   }, [user?.username, user?.displayName]);
 
@@ -118,6 +130,16 @@ export default function EditProfilePage() {
     const sanitized = sanitizeHandle(raw);
     setHandle(sanitized);
     checkAvailability(sanitized);
+  }
+
+  function handleSchoolSelect(school: SchoolType | null) {
+    setCurrentSchool(school);
+    if (school) {
+      setState(school.state);
+      if (school.city) setCity(school.city);
+    } else {
+      setState(detectedState ?? "");
+    }
   }
 
   const handleChanged = handle !== (user?.username ?? "");
@@ -181,12 +203,22 @@ export default function EditProfilePage() {
       const profileRes = await fetch("/api/profile/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bio: bio.trim() || null, city: city.trim() || null }),
+        body: JSON.stringify({ bio: bio.trim() || null, city: city.trim() || null, state: state.trim() || null }),
       });
       if (!profileRes.ok) {
         const d = await profileRes.json().catch(() => ({}));
         setError(d.error ?? "Save failed");
         return;
+      }
+
+      // Save school: delete existing then insert new (if selected)
+      await fetch("/api/user-schools", { method: "DELETE" });
+      if (currentSchool) {
+        await fetch("/api/user-schools", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ schoolId: currentSchool.id }),
+        });
       }
 
       await refresh();
@@ -347,42 +379,47 @@ export default function EditProfilePage() {
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-muted mb-2">City</label>
-              <Input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g. Boston"
-                maxLength={100}
-              />
+              {currentSchool?.city ? (
+                <div className="px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-muted flex items-center justify-between">
+                  <span>{currentSchool.city}</span>
+                  <span className="text-[10px] text-muted/50">Derived from school</span>
+                </div>
+              ) : (
+                <Input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="e.g. Boston"
+                  maxLength={100}
+                />
+              )}
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-muted mb-2">State</label>
-              <div className="px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-muted">
-                Massachusetts (MA)
-              </div>
+              {currentSchool ? (
+                <div className="px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-muted flex items-center justify-between">
+                  <span>{currentSchool.state}</span>
+                  <span className="text-[10px] text-muted/50">Derived from school</span>
+                </div>
+              ) : (
+                <>
+                  <Input
+                    value={state}
+                    onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))}
+                    placeholder="e.g. MA"
+                    maxLength={2}
+                  />
+                  {detectedState && state === detectedState && (
+                    <p className="text-[10px] text-muted/50 mt-1">Auto-detected from your IP</p>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
           {/* School */}
           <div className="bg-elevated border border-border rounded-2xl p-5 mb-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-muted mb-1">School</p>
-                {currentSchool ? (
-                  <div className="flex items-center gap-1.5">
-                    <School size={13} className="text-brand shrink-0" />
-                    <p className="text-sm font-medium text-foreground">{currentSchool.name}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted">No school set</p>
-                )}
-              </div>
-              <Link
-                href="/setup"
-                className="text-xs font-bold text-brand hover:text-brand-light transition-colors cursor-pointer"
-              >
-                {currentSchool ? "Change" : "Add school"}
-              </Link>
-            </div>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-3">School</p>
+            <SchoolPicker selected={currentSchool} onSelect={handleSchoolSelect} />
           </div>
 
           <Button onClick={handleSave} disabled={!canSave || saved} className="w-full">

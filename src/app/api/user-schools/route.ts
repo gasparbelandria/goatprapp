@@ -51,3 +51,28 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ schoolId, schoolName: school.name });
 }
+
+export async function DELETE(req: NextRequest) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("ar_token")?.value;
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  let userId: string;
+  try {
+    userId = verifyToken(token).sub;
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { error } = await supabase
+    .from("pr_user_schools")
+    .delete()
+    .eq("user_id", userId);
+
+  if (error) {
+    void logServerError("pr_user_schools delete error", { message: error.message, section: "profile" });
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Search, Check, Loader2, ChevronRight, BadgeCheck } from "lucide-react";
+import { Loader2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { SchoolPicker } from "@/components/ui/SchoolPicker";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { School } from "@/lib/types";
 
@@ -41,44 +42,12 @@ export default function SetupPage() {
   const [claimLoading, setClaimLoading] = useState(false);
 
   // School step state
-  const [schoolQuery, setSchoolQuery] = useState("");
-  const [schools, setSchools] = useState<School[]>([]);
-  const [schoolsLoading, setSchoolsLoading] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
   const [joinLoading, setJoinLoading] = useState(false);
-
-  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  async function fetchSchools(q: string) {
-    setSchoolsLoading(true);
-    try {
-      const res = await fetch(`/api/schools?q=${encodeURIComponent(q)}`);
-      if (res.ok) {
-        const { schools: data } = await res.json();
-        setSchools(data ?? []);
-      }
-    } finally {
-      setSchoolsLoading(false);
-    }
-  }
 
   useEffect(() => {
     if (!authLoading && user?.username) setStep("school");
   }, [authLoading, user]);
-
-  // Pre-load schools when entering step 2
-  useEffect(() => {
-    if (step === "school") fetchSchools("");
-  }, [step]);
-
-  // Debounced search
-  useEffect(() => {
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => {
-      fetchSchools(schoolQuery);
-    }, 300);
-    return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
-  }, [schoolQuery]);
 
   function handleChange(raw: string) {
     const sanitized = sanitizeHandle(raw);
@@ -228,102 +197,7 @@ export default function SetupPage() {
               <p className="text-sm text-muted">Compete on your school&apos;s leaderboard. You can skip this for now.</p>
             </div>
 
-            {/* Search */}
-            <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-              <input
-                value={schoolQuery}
-                onChange={(e) => { setSchoolQuery(e.target.value); setSelectedSchool(null); }}
-                placeholder="Search your school..."
-                className="w-full bg-elevated border border-border rounded-xl pl-9 pr-4 py-3 text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 transition-colors"
-                autoFocus
-                autoComplete="off"
-                maxLength={100}
-              />
-            </div>
-
-            {/* Selected school confirmation */}
-            {selectedSchool && (
-              <div className="flex items-center gap-3 bg-brand/10 border border-brand/30 rounded-xl px-4 py-3">
-                <Check size={15} className="text-brand shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-foreground truncate">{selectedSchool.name}</p>
-                  {selectedSchool.city && (
-                    <p className="text-xs text-muted">{selectedSchool.city}, {selectedSchool.state}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => setSelectedSchool(null)}
-                  className="text-xs text-muted hover:text-foreground transition-colors cursor-pointer shrink-0"
-                >
-                  Change
-                </button>
-              </div>
-            )}
-
-            {/* Schools table */}
-            <div className="border border-border rounded-xl overflow-hidden">
-              {/* Table header */}
-              <div className="grid grid-cols-[1fr_auto] gap-4 px-4 py-2 bg-surface border-b border-border">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">School</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">City</span>
-              </div>
-
-              {/* Table body */}
-              <div className="overflow-y-auto max-h-56 feed-scroll">
-                {schoolsLoading && schools.length === 0 ? (
-                  <div className="flex justify-center py-6">
-                    <Loader2 size={18} className="animate-spin text-muted" />
-                  </div>
-                ) : schools.length === 0 ? (
-                  <p className="text-sm text-muted text-center py-6">No schools found.</p>
-                ) : (
-                  schools.map((s, i) => {
-                    const isSelected = selectedSchool?.id === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={() => setSelectedSchool(s)}
-                        className={[
-                          "w-full grid grid-cols-[1fr_auto] gap-4 items-center px-4 py-3 text-left transition-colors cursor-pointer",
-                          i > 0 ? "border-t border-border" : "",
-                          isSelected
-                            ? "bg-brand/10"
-                            : "hover:bg-elevated",
-                        ].join(" ")}
-                      >
-                        <div className="min-w-0 flex items-center gap-2">
-                          {isSelected
-                            ? <Check size={13} className="text-brand shrink-0" />
-                            : <span className="w-[13px] shrink-0" />
-                          }
-                          <span className={`text-sm font-medium truncate ${isSelected ? "text-brand" : "text-foreground"}`}>
-                            {s.name}
-                          </span>
-                          {s.verifiedStatus === "official" && (
-                            <BadgeCheck size={13} className="text-brand shrink-0" />
-                          )}
-                        </div>
-                        <span className="text-xs text-muted whitespace-nowrap">
-                          {s.city ?? s.state}
-                        </span>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Footer count */}
-              {!schoolsLoading && schools.length > 0 && (
-                <div className="px-4 py-2 border-t border-border bg-surface flex items-center justify-between">
-                  <span className="text-[10px] text-muted">
-                    {schools.length} school{schools.length !== 1 ? "s" : ""}
-                    {schoolQuery.length >= 2 ? " found" : " listed"}
-                  </span>
-                  {schoolsLoading && <Loader2 size={12} className="animate-spin text-muted" />}
-                </div>
-              )}
-            </div>
+            <SchoolPicker selected={selectedSchool} onSelect={setSelectedSchool} autoFocus />
 
             {/* Actions */}
             <div className="flex gap-2">

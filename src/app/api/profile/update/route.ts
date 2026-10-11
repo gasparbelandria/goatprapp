@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       user_id: payload.sub,
       bio: body.bio ?? null,
       city: body.city ?? null,
-      state: body.state ?? "MA",
+      state: body.state ?? null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" }
