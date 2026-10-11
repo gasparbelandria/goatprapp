@@ -10,6 +10,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { ProfileBar, PublicProfileBar } from "@/components/layout/ProfileBar";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/cn";
+import { VerificationBadge } from "@/components/ui/VerificationBadge";
 import type { GoatPRUser, PRRecord, ExerciseCategory } from "@/lib/types";
 
 const CATEGORY_ORDER: ExerciseCategory[] = ["strength", "bodyweight", "track", "jump", "throw", "sport", "other"];
@@ -265,9 +266,12 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                                   {display}
                                   <span className="text-sm font-bold text-muted ml-1">{unit}</span>
                                 </p>
-                                <p className="text-[10px] text-muted mt-1.5">
-                                  {new Date(r.recordedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                                </p>
+                                <div className="flex items-center justify-between mt-1.5">
+                                  <p className="text-[10px] text-muted">
+                                    {new Date(r.recordedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                  </p>
+                                  <VerificationBadge status={r.verificationStatus ?? "unverified"} />
+                                </div>
                               </div>
                             );
                           })}

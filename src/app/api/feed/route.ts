@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   // - friends records only from followed users (+ self)
   let recQuery = supabase
     .from("pr_records")
-    .select("id, value, unit, notes, media_url, media_type, recorded_at, visibility, created_at, user_id, exercise_id")
+    .select("id, value, unit, notes, media_url, media_type, verification_status, recorded_at, visibility, created_at, user_id, exercise_id")
     .or(`visibility.eq.public,and(visibility.eq.friends,user_id.in.(${feedUserIds.join(",")}))`)
     .order("created_at", { ascending: false })
     .limit(PAGE_SIZE);
@@ -79,6 +79,7 @@ export async function GET(req: NextRequest) {
       notes: r.notes,
       mediaUrl: r.media_url ?? null,
       mediaType: r.media_type ?? null,
+      verificationStatus: r.verification_status ?? "unverified",
       recordedAt: r.recorded_at,
       createdAt: r.created_at,
       isOwn: r.user_id === userId,

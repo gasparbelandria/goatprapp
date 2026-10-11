@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       recorded_at: recordedAt ?? new Date().toISOString().slice(0, 10),
       visibility,
     })
-    .select("id, value, unit, notes, media_url, media_type, recorded_at, visibility, created_at")
+    .select("id, value, unit, notes, media_url, media_type, verification_status, recorded_at, visibility, created_at")
     .single();
 
   if (error || !record) {
@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
     notes: record.notes,
     mediaUrl: record.media_url ?? null,
     mediaType: record.media_type ?? null,
+    verificationStatus: record.verification_status ?? "unverified",
     recordedAt: record.recorded_at,
     visibility: record.visibility,
     createdAt: record.created_at,
@@ -130,7 +131,7 @@ export async function GET(req: NextRequest) {
 
   const { data: records, error } = await supabase
     .from("pr_records")
-    .select(`id, value, unit, notes, media_url, media_type, recorded_at, visibility, created_at, pr_exercises(id, name, normalized_name, category, default_unit, direction)`)
+    .select(`id, value, unit, notes, media_url, media_type, verification_status, recorded_at, visibility, created_at, pr_exercises(id, name, normalized_name, category, default_unit, direction)`)
     .eq("user_id", usernameRow.user_id)
     .in("visibility", visFilter)
     .order("recorded_at", { ascending: false });
@@ -138,7 +139,7 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: "Server error" }, { status: 500 });
 
   type ExRow = { id: string; name: string; normalized_name: string; category: string; default_unit: string; direction: string };
-  type RecRow = { id: string; value: unknown; unit: string; notes: string | null; media_url: string | null; media_type: string | null; recorded_at: string; visibility: string; created_at: string; pr_exercises: ExRow | null };
+  type RecRow = { id: string; value: unknown; unit: string; notes: string | null; media_url: string | null; media_type: string | null; verification_status: string | null; recorded_at: string; visibility: string; created_at: string; pr_exercises: ExRow | null };
   const rows = (records ?? []) as unknown as RecRow[];
 
   const all = rows
@@ -152,6 +153,7 @@ export async function GET(req: NextRequest) {
         notes: r.notes,
         mediaUrl: r.media_url ?? null,
         mediaType: r.media_type ?? null,
+        verificationStatus: r.verification_status ?? "unverified",
         recordedAt: r.recorded_at,
         visibility: r.visibility,
         createdAt: r.created_at,

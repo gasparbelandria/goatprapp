@@ -140,6 +140,8 @@ export interface Exercise {
   status: "active" | "pending" | "inactive";
 }
 
+export type VerificationStatus = "unverified" | "verified" | "official";
+
 export interface PRRecord {
   id: string;
   userId?: string;
@@ -150,6 +152,7 @@ export interface PRRecord {
   notes: string | null;
   mediaUrl: string | null;
   mediaType: "image" | "video" | null;
+  verificationStatus: VerificationStatus;
   recordedAt: string;
   visibility: RecordVisibility;
   createdAt: string;

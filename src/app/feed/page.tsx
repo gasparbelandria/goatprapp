@@ -7,9 +7,11 @@ import { Loader2, Trophy, Plus, TrendingUp } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { TopBar } from "@/components/layout/TopBar";
+import { VerificationBadge } from "@/components/ui/VerificationBadge";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/cn";
+import type { VerificationStatus } from "@/lib/types";
 
 interface FeedUser {
   username: string;
@@ -33,6 +35,7 @@ interface FeedItem {
   notes: string | null;
   mediaUrl: string | null;
   mediaType: "image" | "video" | null;
+  verificationStatus: VerificationStatus;
   recordedAt: string;
   createdAt: string;
   isOwn: boolean;
@@ -158,16 +161,12 @@ function PRCard({ item }: { item: FeedItem }) {
               <span className="text-base font-bold text-muted ml-1.5">{item.unit}</span>
             </p>
           </div>
-          <div className="flex flex-col items-end gap-1 mt-1 shrink-0">
+          <div className="flex flex-col items-end gap-1.5 mt-1 shrink-0">
             <div className="flex items-center gap-1 bg-brand/10 border border-brand/20 rounded-lg px-2 py-1">
               <TrendingUp size={11} className="text-brand" />
               <span className="text-[10px] font-black uppercase text-brand tracking-wide">PR</span>
             </div>
-            {!item.mediaUrl && (
-              <span className="text-[9px] font-bold uppercase tracking-wider text-muted bg-elevated border border-border rounded px-1.5 py-0.5">
-                Self-reported
-              </span>
-            )}
+            <VerificationBadge status={item.verificationStatus} />
           </div>
         </div>
 
