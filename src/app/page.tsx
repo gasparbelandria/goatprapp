@@ -159,15 +159,11 @@ export default function LandingPage() {
 
               <div style={{ marginTop: 24, padding: "16px 0 8px", borderTop: `1px solid ${BDR}` }}>
                 <div style={{ ...MONO, fontSize: 10, letterSpacing: "0.2em", color: MUT, marginBottom: 6 }}>BENCH PRESS · PERSONAL RECORD</div>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
-                  <div style={{ ...SCORE, fontSize: 88, lineHeight: 0.85, fontVariantNumeric: "tabular-nums", color: ACC }}>
-                    225
-                  </div>
-                  <div style={{ paddingBottom: 8, display: "flex", flexDirection: "column", gap: 5 }}>
-                    <span style={{ ...MONO, fontSize: 11, letterSpacing: "0.2em", color: MUT }}>LBS</span>
-                    <span style={{ fontWeight: 800, fontSize: 12, color: POS }}>+12 LBS PR ↑</span>
-                  </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ ...SCORE, fontSize: 88, lineHeight: 0.85, fontVariantNumeric: "tabular-nums", color: ACC }}>225</span>
+                  <span style={{ ...SCORE, fontSize: 62, lineHeight: 0.85, color: MUT, marginTop: 5 }}>LBS</span>
                 </div>
+                <div style={{ fontWeight: 800, fontSize: 12, color: POS, marginTop: 6 }}>+12 LBS PR ↑</div>
               </div>
 
               <div style={{ display: "flex", gap: 8, marginTop: 14 }}>

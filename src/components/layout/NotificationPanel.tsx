@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Bell, X, Check } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useI18n } from "@/hooks/useI18n";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -122,62 +122,50 @@ function RatingNotificationItem({ notification }: { notification: AppNotificatio
 
   const postHref = `/@${payload.post_author_username}/post/${payload.post_id}`;
 
+  const raterHref = payload.rater_username ? `/@${payload.rater_username}` : postHref;
+
   return (
-    <div className={cn(
-      "rounded-lg border border-border bg-elevated overflow-hidden",
+    <Link href={raterHref} className={cn(
+      "rounded-lg border border-border bg-elevated overflow-hidden flex items-stretch gap-0",
       !notification.read && "border-l-2 border-l-brand",
       notification.read && "opacity-70"
     )}>
-      <div className="flex items-stretch gap-0">
-        {/* Post thumbnail */}
-        <Link href={postHref} className="flex-shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={resolvePostThumbnail(payload)}
-            alt=""
-            className="w-16 h-full object-cover"
-            style={{ minHeight: "72px" }}
-          />
-        </Link>
+      {/* Post thumbnail */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={resolvePostThumbnail(payload)}
+        alt=""
+        className="w-16 flex-shrink-0 object-cover"
+        style={{ minHeight: "72px" }}
+      />
 
-        {/* Content */}
-        <div className="flex-1 min-w-0 px-3 py-2.5">
-          {/* Rater name + action */}
-          <p className="text-xs text-muted leading-snug">
-            {payload.rater_username ? (
-              <Link
-                href={`/@${payload.rater_username}`}
-                className="font-black text-brand-light hover:underline"
-              >
-                @{payload.rater_username}
-              </Link>
-            ) : (
-              <span className="font-bold text-foreground">{payload.rater_display_name}</span>
-            )}{" "}
-            {t("notifications.ratingRated")}
-          </p>
+      {/* Content */}
+      <div className="flex-1 min-w-0 px-3 py-2.5">
+        <p className="text-xs text-muted leading-snug">
+          <span className="font-black text-brand-light">
+            {payload.rater_username ? `@${payload.rater_username}` : payload.rater_display_name}
+          </span>{" "}
+          {t("notifications.ratingRated")}
+        </p>
 
-          {/* Score — prominent */}
-          <p
-            className="text-xl font-black leading-tight mt-0.5 tabular-nums"
-            style={{
-              background: `linear-gradient(to right, var(--color-brand), var(--color-acid))`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            {t("notifications.ratingAuras", { score: payload.score })}
-          </p>
+        <p
+          className="text-xl font-black leading-tight mt-0.5 tabular-nums"
+          style={{
+            background: `linear-gradient(to right, var(--color-brand), var(--color-acid))`,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          {t("notifications.ratingAuras", { score: payload.score })}
+        </p>
 
-          {/* Location + time */}
-          <p className="text-[10px] text-muted/60 mt-0.5 truncate">
-            {location ? `${location} · ` : ""}
-            {timeAgo(notification.createdAt, locale)}
-          </p>
-        </div>
+        <p className="text-[10px] text-muted/60 mt-0.5 truncate">
+          {location ? `${location} · ` : ""}
+          {timeAgo(notification.createdAt, locale)}
+        </p>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -186,58 +174,44 @@ function RatingNotificationItem({ notification }: { notification: AppNotificatio
 function FollowNotificationItem({ notification }: { notification: AppNotification }) {
   const { t, locale } = useI18n();
   const payload = notification.payload as unknown as FollowPayload;
-
   const profileHref = payload.follower_username ? `/@${payload.follower_username}` : null;
   const location = [payload.follower_city, payload.follower_country_name].filter(Boolean).join(", ");
 
-  const nameEl = profileHref ? (
-    <Link href={profileHref} className="font-black text-brand-light hover:underline">
-      @{payload.follower_username}
-    </Link>
-  ) : (
-    <span className="font-bold text-foreground">{payload.follower_display_name}</span>
+  const cls = cn(
+    "flex items-center gap-3 p-3 rounded-lg border border-border bg-elevated",
+    !notification.read && "border-l-2 border-l-brand",
+    notification.read && "opacity-70"
   );
 
-  return (
-    <div className={cn(
-      "flex items-center gap-3 p-3 rounded-lg border border-border bg-elevated",
-      !notification.read && "border-l-2 border-l-brand",
-      notification.read && "opacity-70"
-    )}>
-      {/* Avatar */}
-      {profileHref ? (
-        <Link href={profileHref} className="flex-shrink-0">
-          {payload.follower_avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={payload.follower_avatar_url}
-              alt=""
-              className="size-10 rounded-full object-cover ring-2 ring-brand/30"
-            />
-          ) : (
-            <div className="size-10 rounded-full bg-brand/20 flex items-center justify-center text-sm font-black text-brand">
-              {payload.follower_display_name.charAt(0).toUpperCase()}
-            </div>
-          )}
-        </Link>
-      ) : (
-        <div className="size-10 rounded-full bg-brand/20 flex items-center justify-center text-sm font-black text-brand flex-shrink-0">
-          {payload.follower_display_name.charAt(0).toUpperCase()}
-        </div>
-      )}
-
-      {/* Text */}
+  const content = (
+    <>
+      <div className="flex-shrink-0">
+        {payload.follower_avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={payload.follower_avatar_url} alt="" className="size-10 rounded-full object-cover ring-2 ring-brand/30" />
+        ) : (
+          <div className="size-10 rounded-full bg-brand/20 flex items-center justify-center text-sm font-black text-brand">
+            {payload.follower_display_name.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs text-muted leading-snug">
-          {nameEl}{" "}{t("notifications.followedYou")}
+          <span className="font-black text-brand-light">
+            {payload.follower_username ? `@${payload.follower_username}` : payload.follower_display_name}
+          </span>{" "}{t("notifications.followedYou")}
         </p>
         <p className="text-[10px] text-muted/60 mt-0.5 truncate">
           {location ? `${location} · ` : ""}
           {timeAgo(notification.createdAt, locale)}
         </p>
       </div>
-    </div>
+    </>
   );
+
+  return profileHref
+    ? <Link href={profileHref} className={cls}>{content}</Link>
+    : <div className={cls}>{content}</div>;
 }
 
 // ── Generic fallback ──────────────────────────────────────────────────────────
@@ -281,7 +255,11 @@ export function NotificationBell({ large = false, align = "left" }: { large?: bo
   return (
     <div className="relative" ref={panelRef}>
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          if (next && unreadCount > 0) markAllRead();
+        }}
         className={cn(
           "relative flex items-center justify-center rounded-lg text-muted hover:text-foreground transition-colors cursor-pointer",
           large ? "p-1 hover:bg-elevated" : "size-8 hover:bg-elevated"
@@ -291,7 +269,7 @@ export function NotificationBell({ large = false, align = "left" }: { large?: bo
         <Bell size={large ? 22 : 16} strokeWidth={1.5} />
         {unreadCount > 0 && (
           <span className={cn(
-            "absolute rounded-full bg-brand text-white font-black flex items-center justify-center",
+            "absolute rounded-full bg-brand text-surface font-black flex items-center justify-center",
             large
               ? "-top-1 -right-1 size-5 text-[10px]"
               : "-top-0.5 -right-0.5 size-4 text-[9px]"
@@ -308,20 +286,9 @@ export function NotificationBell({ large = false, align = "left" }: { large?: bo
             <span className="text-xs font-black uppercase tracking-widest text-foreground">
               {t("notifications.title")}
             </span>
-            <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllRead}
-                  className="text-[10px] font-bold text-muted hover:text-brand transition-colors cursor-pointer flex items-center gap-1"
-                >
-                  <Check size={10} />
-                  {t("notifications.markAllRead")}
-                </button>
-              )}
-              <button onClick={() => setOpen(false)} className="text-muted hover:text-foreground cursor-pointer">
-                <X size={14} />
-              </button>
-            </div>
+            <button onClick={() => setOpen(false)} className="text-muted hover:text-foreground cursor-pointer">
+              <X size={14} />
+            </button>
           </div>
 
           {/* List */}

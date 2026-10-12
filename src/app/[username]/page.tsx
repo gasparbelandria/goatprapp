@@ -262,10 +262,10 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-2 truncate">
                                   {r.exercise.name}
                                 </p>
-                                <p className="font-score text-[2.2rem] text-brand leading-none">
-                                  {display}
-                                  <span className="text-sm font-bold text-muted ml-1">{unit}</span>
-                                </p>
+                                <div className="flex items-end gap-1.5 leading-none">
+                                  <span className="font-score text-[2.2rem] text-brand">{display}</span>
+                                  <span className="font-score text-[1.54rem] text-muted mb-1">{unit}</span>
+                                </div>
                                 <div className="flex items-center justify-between mt-1.5">
                                   <p className="text-[10px] text-muted">
                                     {new Date(r.recordedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}

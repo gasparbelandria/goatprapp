@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Loader2, Trophy, Plus, TrendingUp } from "lucide-react";
+import { Loader2, Trophy, Plus, TrendingUp, Dumbbell, User, Timer, ArrowUp, Circle, Bike, Target, type LucideIcon } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { TopBar } from "@/components/layout/TopBar";
@@ -43,14 +43,14 @@ interface FeedItem {
   exercise: FeedExercise;
 }
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  strength: "🏋️",
-  bodyweight: "💪",
-  track: "🏃",
-  jump: "⬆️",
-  throw: "🥏",
-  sport: "⚽",
-  other: "🎯",
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  strength:   Dumbbell,
+  bodyweight: User,
+  track:      Timer,
+  jump:       ArrowUp,
+  throw:      Circle,
+  sport:      Bike,
+  other:      Target,
 };
 
 function timeAgo(iso: string): string {
@@ -101,7 +101,7 @@ function AvatarSmall({ displayName, avatarUrl }: { displayName: string; avatarUr
 
 function PRCard({ item }: { item: FeedItem }) {
   const displayVal = formatValue(item.value, item.unit);
-  const emoji = CATEGORY_EMOJI[item.exercise.category] ?? "🏅";
+  const CategoryIcon = CATEGORY_ICON[item.exercise.category] ?? Target;
 
   return (
     <div className="bg-elevated border border-border rounded-2xl overflow-hidden hover:border-brand/20 transition-colors card-shadow">
@@ -153,13 +153,14 @@ function PRCard({ item }: { item: FeedItem }) {
       <div className="px-4 pb-4 pt-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-1">
-              {emoji} {item.exercise.name}
+            <p className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-muted mb-1">
+              <CategoryIcon size={11} strokeWidth={1.5} />
+              {item.exercise.name}
             </p>
-            <p className="font-score text-[2.6rem] text-brand leading-none">
-              {displayVal}
-              <span className="text-base font-bold text-muted ml-1.5">{item.unit}</span>
-            </p>
+            <div className="flex items-end gap-1.5 leading-none">
+              <span className="font-score text-[2.6rem] text-brand">{displayVal}</span>
+              <span className="font-score text-[1.82rem] text-muted mb-1">{item.unit}</span>
+            </div>
           </div>
           <div className="flex flex-col items-end gap-1.5 mt-1 shrink-0">
             <div className="flex items-center gap-1 bg-brand/10 border border-brand/20 rounded-lg px-2 py-1">
