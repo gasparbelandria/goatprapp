@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Loader2, ChevronRight } from "lucide-react";
+import { Loader2, ChevronRight, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { SchoolPicker } from "@/components/ui/SchoolPicker";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -114,7 +114,7 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+    <div className="relative min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
 
         {/* Logo */}
@@ -217,6 +217,17 @@ export default function SetupPage() {
           </div>
         )}
       </div>
+
+      <button
+        onClick={async () => {
+          await fetch("/api/auth/logout", { method: "POST" });
+          router.push("/");
+        }}
+        className="absolute bottom-6 right-6 flex items-center gap-1.5 text-xs text-muted hover:text-danger transition-colors cursor-pointer"
+      >
+        <LogOut size={13} />
+        Sign out
+      </button>
     </div>
   );
 }
