@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, Images, PlusCircle, Trophy, User } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Home, Images, PlusCircle, Trophy, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useI18n } from "@/hooks/useI18n";
@@ -10,15 +10,20 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { user } = useCurrentUser();
+  const router = useRouter();
+  const { user, loading } = useCurrentUser();
   const { t } = useI18n();
   const profileHref = user?.username ? `/@${user.username}` : "/setup";
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/");
+  };
 
   const NAV_ITEMS = [
     { href: "/feed",     icon: Home,   label: t("nav.feed") },
     { href: "/my-posts", icon: Images, label: t("nav.myPosts") },
     { href: "/rankings", icon: Trophy, label: t("nav.rankings") },
-    { href: profileHref, icon: User,   label: t("nav.profile") },
   ];
 
   return (
@@ -47,6 +52,30 @@ export function BottomNav() {
             </Link>
           );
         })}
+
+        {/* Profile — or logout fallback when account is broken */}
+        {!loading && !user ? (
+          <button
+            onClick={handleLogout}
+            aria-label="Logout"
+            className="flex items-center justify-center size-11 rounded-full transition-colors text-muted hover:text-danger cursor-pointer"
+          >
+            <LogOut size={20} strokeWidth={1.5} />
+          </button>
+        ) : (
+          <Link
+            href={profileHref}
+            aria-label={t("nav.profile")}
+            className={cn(
+              "flex items-center justify-center size-11 rounded-full transition-colors",
+              (pathname === profileHref || pathname.startsWith("/@"))
+                ? "bg-brand/15 text-brand"
+                : "text-muted hover:text-foreground"
+            )}
+          >
+            <User size={20} strokeWidth={pathname.startsWith("/@") ? 2.5 : 1.5} />
+          </Link>
+        )}
 
         {/* CTA — create post */}
         <Link

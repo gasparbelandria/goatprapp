@@ -4,7 +4,7 @@ import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Loader2, UserPlus, UserMinus, School, MapPin, Trophy, Plus, Pencil } from "lucide-react";
+import { Loader2, UserPlus, UserMinus, School, MapPin, Trophy, Plus, Pencil, LogOut } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ProfileBar, PublicProfileBar } from "@/components/layout/ProfileBar";
@@ -298,6 +298,20 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               <span className="text-sm font-bold text-foreground">
                 {profileLoading ? "…" : `@${cleanUsername}`}
               </span>
+            }
+            right={
+              isOwnProfile ? (
+                <button
+                  onClick={async () => {
+                    await fetch("/api/auth/logout", { method: "POST" });
+                    router.push("/");
+                  }}
+                  className="p-1.5 text-muted hover:text-danger transition-colors cursor-pointer"
+                  aria-label="Logout"
+                >
+                  <LogOut size={18} strokeWidth={1.5} />
+                </button>
+              ) : undefined
             }
           />
           {profileContent}
