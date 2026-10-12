@@ -104,7 +104,7 @@ function PRCard({ item }: { item: FeedItem }) {
   const emoji = CATEGORY_EMOJI[item.exercise.category] ?? "🏅";
 
   return (
-    <div className="bg-elevated border border-border rounded-2xl overflow-hidden hover:border-brand/20 transition-colors">
+    <div className="bg-elevated border border-border rounded-2xl overflow-hidden hover:border-brand/20 transition-colors card-shadow">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
         <Link href={`/@${item.user.username}`} className="cursor-pointer">
@@ -156,7 +156,7 @@ function PRCard({ item }: { item: FeedItem }) {
             <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-1">
               {emoji} {item.exercise.name}
             </p>
-            <p className="text-3xl font-black text-brand leading-none">
+            <p className="font-score text-[2.6rem] text-brand leading-none">
               {displayVal}
               <span className="text-base font-bold text-muted ml-1.5">{item.unit}</span>
             </p>

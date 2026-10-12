@@ -120,7 +120,7 @@ export default function SetupPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8 gap-2">
           <Image
-            src="/logo-400-400.png"
+            src="/logo-goat.png"
             alt="GOATPR"
             width={52}
             height={52}

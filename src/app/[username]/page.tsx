@@ -257,12 +257,12 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                             return (
                               <div
                                 key={r.id}
-                                className="bg-elevated border border-border rounded-2xl p-4"
+                                className="bg-elevated border border-border rounded-2xl p-4 card-shadow"
                               >
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-2 truncate">
                                   {r.exercise.name}
                                 </p>
-                                <p className="text-2xl font-black text-brand leading-none">
+                                <p className="font-score text-[2.2rem] text-brand leading-none">
                                   {display}
                                   <span className="text-sm font-bold text-muted ml-1">{unit}</span>
                                 </p>
@@ -316,7 +316,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
       <footer className="border-t border-border py-5 text-center">
         <Link href="/" className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-400-400.png" alt="GOATPR" width={22} height={22} className="rounded-md opacity-70 group-hover:opacity-100 transition-opacity" />
+          <img src="/logo-goat.png" alt="GOATPR" width={22} height={22} className="rounded-md opacity-70 group-hover:opacity-100 transition-opacity" />
           <span className="text-xs font-black tracking-wide text-brand">GOATPR</span>
           <span className="text-xs text-muted">· goatpr.app</span>
         </Link>

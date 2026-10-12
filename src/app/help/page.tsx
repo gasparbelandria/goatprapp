@@ -1,19 +1,21 @@
 "use client";
 
+import { Dumbbell, Timer, Target, Flame, Trophy, FileText } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { TopBar } from "@/components/layout/TopBar";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useI18n } from "@/hooks/useI18n";
+import type { LucideIcon } from "lucide-react";
 
-const CATEGORY_SECTIONS = [
-  { key: "help.levelNPC",       emoji: "🏋️", label: "Strength" },
-  { key: "help.levelROOKIE",    emoji: "🏃", label: "Track" },
-  { key: "help.levelRISING",    emoji: "⬆️", label: "Field" },
-  { key: "help.levelFARMER",    emoji: "💪", label: "Bodyweight" },
-  { key: "help.levelELITE",     emoji: "📊", label: "Rankings" },
-  { key: "help.levelLEGENDARY", emoji: "📝", label: "Logging" },
-] as const;
+const CATEGORY_SECTIONS: { key: string; Icon: LucideIcon; label: string }[] = [
+  { key: "help.levelNPC",       Icon: Dumbbell, label: "Strength"   },
+  { key: "help.levelROOKIE",    Icon: Timer,    label: "Track"      },
+  { key: "help.levelRISING",    Icon: Target,   label: "Field"      },
+  { key: "help.levelFARMER",    Icon: Flame,    label: "Bodyweight" },
+  { key: "help.levelELITE",     Icon: Trophy,   label: "Rankings"   },
+  { key: "help.levelLEGENDARY", Icon: FileText, label: "Logging"    },
+];
 
 export default function HelpPage() {
   useAuthGuard();
@@ -45,12 +47,12 @@ export default function HelpPage() {
             </div>
 
             <div className="space-y-3">
-              {CATEGORY_SECTIONS.map(({ key, emoji, label }) => (
+              {CATEGORY_SECTIONS.map(({ key, Icon, label }) => (
                 <div
                   key={key}
                   className="bg-elevated border border-border rounded-2xl p-5 flex gap-4 items-start"
                 >
-                  <span className="text-2xl shrink-0 mt-0.5">{emoji}</span>
+                  <Icon size={20} strokeWidth={1.5} className="text-brand shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-black text-brand uppercase tracking-wider mb-1">{label}</p>
                     <p className="text-sm text-foreground leading-relaxed">{t(key)}</p>

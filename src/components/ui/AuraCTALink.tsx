@@ -22,15 +22,15 @@ export function AuraCTALink({
       href={href}
       style={{
         display: "inline-block",
-        background: "#B8F34A",
-        color: "#0B1020",
+        background: "var(--color-foreground)",
+        color: "var(--color-surface)",
         fontWeight: 800,
         fontSize,
         padding,
         borderRadius,
+        border: "1px solid var(--color-foreground)",
         textDecoration: "none",
         whiteSpace: "nowrap",
-        boxShadow: "0 4px 24px rgba(184,243,74,0.3)",
       }}
     >
       {children}

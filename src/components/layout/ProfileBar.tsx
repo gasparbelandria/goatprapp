@@ -18,7 +18,7 @@ export function ProfileBar({
   right?: React.ReactNode;
 }) {
   return (
-    <div className="md:hidden sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b border-border">
+    <div className="md:hidden sticky top-0 z-40 bg-background border-b border-border">
       <div className="relative flex items-center justify-between px-4 h-12">
         <Link
           href={backHref}
@@ -47,10 +47,10 @@ export function PublicProfileBar() {
   const loginHref = `/login?redirect=${encodeURIComponent(pathname)}`;
 
   return (
-    <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b border-border px-4 h-14 flex items-center justify-between">
+    <header className="sticky top-0 z-40 bg-background border-b border-border px-4 h-14 flex items-center justify-between">
       <Link href="/" className="inline-flex items-center gap-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-400-400.png" alt="GOATPR" width={30} height={30} className="rounded-lg" />
+        <img src="/logo-goat.png" alt="GOATPR" width={30} height={30} className="rounded-lg" />
         <span className="font-black text-sm text-foreground tracking-wide">GOATPR</span>
       </Link>
       <Link

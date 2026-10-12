@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Loader2, Check, Trophy, Camera, Video, X } from "lucide-react";
+import { ChevronDown, Loader2, Check, Trophy, Camera, Video, Images, X } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { TopBar } from "@/components/layout/TopBar";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
+import { MediaCapture } from "@/components/ui/MediaCapture";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useToast } from "@/hooks/useToast";
@@ -62,6 +63,7 @@ export default function CreatePage() {
   const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string | null>(null);
   const [uploadedMediaType, setUploadedMediaType] = useState<"image" | "video" | null>(null);
   const [mediaUploading, setMediaUploading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
 
   useEffect(() => {
     fetch("/api/exercises")
@@ -83,19 +85,14 @@ export default function CreatePage() {
   const canSubmit =
     selectedExercise && value && parseFloat(value) > 0 && !submitting && !mediaUploading;
 
-  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  async function processFile(file: File) {
     if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
-
     const previewUrl = URL.createObjectURL(file);
     setMediaFile(file);
     setMediaPreviewUrl(previewUrl);
     setUploadedMediaUrl(null);
     setUploadedMediaType(null);
     setMediaUploading(true);
-
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -111,8 +108,14 @@ export default function CreatePage() {
       setUploadedMediaType(mediaType);
     } finally {
       setMediaUploading(false);
-      e.target.value = "";
     }
+  }
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+    e.target.value = "";
   }
 
   function clearMedia() {
@@ -297,18 +300,26 @@ export default function CreatePage() {
 
             {!mediaFile ? (
               <>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex flex-col items-center gap-2 py-7 border border-dashed border-border rounded-xl text-muted hover:border-brand/50 hover:text-foreground transition-colors cursor-pointer"
-                >
-                  <div className="flex gap-3">
-                    <Camera size={20} />
-                    <Video size={20} />
-                  </div>
-                  <span className="text-xs font-medium">Add photo or video</span>
-                  <span className="text-[10px] opacity-60">JPG · PNG · MP4 · MOV · max 50 MB</span>
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 flex flex-col items-center gap-1.5 py-5 border border-dashed border-border rounded-xl text-muted hover:border-brand/50 hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <Images size={18} />
+                    <span className="text-xs font-medium">From library</span>
+                    <span className="text-[10px] opacity-60">Photo or video</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCamera(true)}
+                    className="flex-1 flex flex-col items-center gap-1.5 py-5 border border-dashed border-border rounded-xl text-muted hover:border-brand/50 hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <Camera size={18} />
+                    <span className="text-xs font-medium">Camera</span>
+                    <span className="text-[10px] opacity-60">Photo · 10s video</span>
+                  </button>
+                </div>
                 <p className="text-[10px] text-muted/60 mt-1.5 flex items-center gap-1.5">
                   <span className="inline-flex items-center px-1.5 py-0.5 bg-elevated border border-border rounded text-[9px] font-bold uppercase tracking-wider">
                     Self-reported
@@ -390,6 +401,11 @@ export default function CreatePage() {
         </div>
       </main>
       <BottomNav />
+      <MediaCapture
+        open={showCamera}
+        onClose={() => setShowCamera(false)}
+        onCapture={(file) => { setShowCamera(false); processFile(file); }}
+      />
     </div>
   );
 }

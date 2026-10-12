@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { NotificationBell } from "@/components/layout/NotificationPanel";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 interface TopBarProps {
   title?: string;
@@ -19,7 +20,7 @@ export function TopBar({ title, showLogo = false }: TopBarProps) {
   const profileHref = user?.username ? `/@${user.username}` : "/setup";
 
   return (
-    <header className="md:hidden sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
+    <header className="md:hidden sticky top-0 z-40 bg-background border-b border-border/50 px-4 py-3 flex items-center justify-between">
       {showLogo ? (
         <Link href="/" className="inline-flex items-center">
           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 800, fontSize: 18, letterSpacing: "-0.02em", color: "#F5F5F5" }}>GoatPR</span>
@@ -29,7 +30,8 @@ export function TopBar({ title, showLogo = false }: TopBarProps) {
           {title}
         </h1>
       )}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1">
+        <ThemeToggle />
         <NotificationBell align="right" />
         {user && (
           <Link href={profileHref}>

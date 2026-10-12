@@ -71,7 +71,7 @@ function RecordRow({ record, onDelete }: { record: MyRecord; onDelete: (id: stri
   const visLabel = record.visibility === "public" ? "🌐" : record.visibility === "friends" ? "👥" : "🔒";
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-elevated border border-border rounded-xl hover:border-brand/20 transition-colors">
+    <div className="flex items-center gap-3 px-4 py-3 bg-elevated border border-border rounded-xl hover:border-brand/20 transition-colors card-shadow">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="text-sm font-bold text-foreground truncate">{record.exercise?.name ?? "Unknown"}</p>
@@ -83,7 +83,7 @@ function RecordRow({ record, onDelete }: { record: MyRecord; onDelete: (id: stri
         </p>
       </div>
       <div className="text-right shrink-0">
-        <p className="text-lg font-black text-brand leading-none">
+        <p className="font-score text-[1.7rem] text-brand leading-none">
           {displayVal}
           <span className="text-xs font-bold text-muted ml-1">{record.unit}</span>
         </p>

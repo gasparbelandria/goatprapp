@@ -274,7 +274,7 @@ export default function EditProfilePage() {
           {/* Avatar */}
           <div className="bg-elevated border border-border rounded-2xl p-6 mb-4 flex flex-col items-center gap-3">
             <div className="relative">
-              <div className="size-24 rounded-full overflow-hidden bg-brand/20 border-2 border-border flex items-center justify-center">
+              <div className="size-24 rounded-full overflow-hidden bg-brand/20 border border-border flex items-center justify-center">
                 {displayAvatarUrl && !avatarImgError ? (
                   <Image
                     src={displayAvatarUrl}

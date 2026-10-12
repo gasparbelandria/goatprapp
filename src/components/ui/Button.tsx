@@ -16,16 +16,17 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center font-black uppercase tracking-wider rounded-lg transition-all duration-150 cursor-pointer",
-        "disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-elevated disabled:text-muted disabled:shadow-none",
+        "inline-flex items-center justify-center font-black uppercase tracking-wider rounded-lg transition-all duration-150 cursor-pointer border",
+        "disabled:cursor-not-allowed disabled:opacity-40",
         {
-          "bg-brand text-[#0B1020] hover:bg-brand-light active:scale-95 shadow-[0_0_20px_rgba(184,243,74,0.2)] hover:shadow-[0_0_28px_rgba(184,243,74,0.4)]":
+          "bg-foreground text-surface border-foreground hover:opacity-80 active:scale-95":
             variant === "primary",
-          "border border-border text-foreground hover:border-brand/50 hover:text-brand-light active:scale-95":
+          "bg-transparent border-foreground text-foreground hover:bg-foreground hover:text-surface active:scale-95":
             variant === "secondary",
-          "bg-danger text-white hover:opacity-90 active:scale-95":
+          "bg-transparent border-danger text-danger hover:bg-danger hover:text-surface active:scale-95":
             variant === "danger",
-          "text-muted hover:text-foreground active:scale-95": variant === "ghost",
+          "border-transparent text-muted hover:text-foreground active:scale-95":
+            variant === "ghost",
           "px-3 py-1.5 text-xs": size === "sm",
           "px-5 py-2.5 text-sm": size === "md",
           "px-8 py-4 text-base": size === "lg",

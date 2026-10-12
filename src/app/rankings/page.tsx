@@ -62,7 +62,7 @@ function RankRow({ entry, currentUsername, unit }: { entry: PRRankingEntry; curr
     <Link
       href={`/@${entry.username}`}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors cursor-pointer",
+        "flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors cursor-pointer card-shadow",
         isMe ? "bg-brand/10 border-brand/30 hover:bg-brand/15" : "bg-elevated border-border hover:border-brand/20"
       )}
     >
@@ -85,7 +85,7 @@ function RankRow({ entry, currentUsername, unit }: { entry: PRRankingEntry; curr
         </p>
       </div>
       <div className="text-right shrink-0">
-        <p className="font-black text-sm text-foreground tabular-nums">
+        <p className="font-score text-[1.6rem] text-foreground leading-none">
           {formatValue(entry.bestValue, unit)}
           <span className="text-xs font-bold text-muted ml-1">{unit}</span>
         </p>

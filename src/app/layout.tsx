@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
+import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { RootProviders } from "@/components/layout/RootProviders";
 import { ToastContainer } from "@/components/ui/Toast";
@@ -25,10 +26,11 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "600"],
 });
 
+
 export const metadata: Metadata = {
   icons: {
-    icon: "/logo-400-400.png",
-    apple: "/logo-400-400.png",
+    icon: "/logo-goat.png",
+    apple: "/logo-goat.png",
   },
   title: {
     template: "%s | GOATPR",
@@ -79,13 +81,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} h-full`}>
+    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} h-full`} suppressHydrationWarning>
       <body className="min-h-full bg-background text-foreground antialiased">
-        <RootProviders>
-          <ErrorLoggerInit />
-          {children}
-          <ToastContainer />
-        </RootProviders>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <RootProviders>
+            <ErrorLoggerInit />
+            {children}
+            <ToastContainer />
+          </RootProviders>
+        </ThemeProvider>
         <Script
           src="https://analytics.weblify.me/script.js"
           data-website-id="641105b7-6a44-4361-8ede-c619fd5d03a3"

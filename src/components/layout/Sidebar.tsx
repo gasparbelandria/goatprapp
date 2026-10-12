@@ -10,6 +10,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useI18n } from "@/hooks/useI18n";
 import { LangToggle } from "@/components/ui/LangToggle";
 import { NotificationBell } from "@/components/layout/NotificationPanel";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const NAV_ITEMS = [
   { href: "/feed", icon: Home, labelKey: "nav.feed" },
@@ -40,12 +41,13 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="hidden md:flex fixed left-0 top-0 h-full w-60 flex-col bg-surface border-r border-border z-40">
+    /* dark class forces dark CSS variable scope on children regardless of page theme */
+    <aside className="dark hidden md:flex fixed left-0 top-0 h-full w-60 flex-col nav-always-dark z-40">
       {/* Logo + notifications */}
       <div className="px-6 py-5 flex items-center justify-between">
         <Link href="/">
           <Image
-            src="/logo-400-400.png"
+            src="/logo-goat.png"
             alt="GOATPR"
             width={38}
             height={38}
@@ -61,7 +63,7 @@ export function Sidebar() {
       <div className="px-4 pb-4">
         <Link
           href="/create"
-          className="flex items-center justify-center gap-2 w-full py-3 bg-brand hover:bg-brand-light text-[#0B1020] font-black uppercase tracking-wider rounded-lg transition-all text-sm shadow-[0_0_16px_rgba(184,243,74,0.25)]"
+          className="flex items-center justify-center gap-2 w-full py-3 bg-foreground hover:opacity-80 text-surface font-black uppercase tracking-wider rounded-lg transition-opacity text-sm border border-foreground"
         >
           <PlusCircle size={16} strokeWidth={2.5} />
           {t("nav.createPost")}
@@ -140,7 +142,10 @@ export function Sidebar() {
             <LogOut size={13} />
             {t("nav.logout")}
           </button>
-          <LangToggle variant="text" />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <LangToggle variant="text" />
+          </div>
         </div>
       </div>
     </aside>
