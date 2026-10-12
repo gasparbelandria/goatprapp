@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
-  const mime = file.type.toLowerCase();
+  const mime = file.type.toLowerCase().split(";")[0].trim();
   const mediaType = ALLOWED_TYPES[mime];
   if (!mediaType) {
     return NextResponse.json({ error: "File type not allowed" }, { status: 400 });

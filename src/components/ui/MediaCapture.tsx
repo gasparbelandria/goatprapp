@@ -41,6 +41,10 @@ export function MediaCapture({ open, onClose, onCapture }: MediaCaptureProps) {
     setError(null);
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: "environment" }, audio: true })
+      .catch(() =>
+        // Fallback: video-only if no microphone or audio denied
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+      )
       .then((stream) => {
         streamRef.current = stream;
         if (videoRef.current) {
@@ -77,8 +81,15 @@ export function MediaCapture({ open, onClose, onCapture }: MediaCaptureProps) {
     if (!stream) return;
 
     chunksRef.current = [];
-    const mimeType = MediaRecorder.isTypeSupported("video/mp4") ? "video/mp4" : "video/webm";
-    const recorder = new MediaRecorder(stream, { mimeType });
+
+    let recorder: MediaRecorder;
+    try {
+      const preferred = MediaRecorder.isTypeSupported("video/mp4") ? "video/mp4" : "video/webm";
+      recorder = new MediaRecorder(stream, { mimeType: preferred });
+    } catch {
+      try { recorder = new MediaRecorder(stream, { mimeType: "video/webm" }); }
+      catch { recorder = new MediaRecorder(stream); }
+    }
     recorderRef.current = recorder;
 
     recorder.ondataavailable = (e) => {
@@ -86,9 +97,12 @@ export function MediaCapture({ open, onClose, onCapture }: MediaCaptureProps) {
     };
 
     recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: mimeType });
-      const ext = mimeType === "video/mp4" ? "mp4" : "webm";
-      onCapture(new File([blob], `capture.${ext}`, { type: mimeType }));
+      // Strip codec suffix (e.g. "video/webm; codecs=vp8") → "video/webm"
+      const rawMime = recorder.mimeType || "video/webm";
+      const cleanMime = rawMime.split(";")[0].trim();
+      const ext = cleanMime === "video/mp4" ? "mp4" : "webm";
+      const blob = new Blob(chunksRef.current, { type: cleanMime });
+      onCapture(new File([blob], `capture.${ext}`, { type: cleanMime }));
       onClose();
     };
 
