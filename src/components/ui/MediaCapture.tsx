@@ -40,7 +40,7 @@ export function MediaCapture({ open, onClose, onCapture }: MediaCaptureProps) {
 
     setError(null);
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "environment" }, audio: true })
+      .getUserMedia({ video: { facingMode: "environment" }, audio: false })
       .then((stream) => {
         streamRef.current = stream;
         if (videoRef.current) {
