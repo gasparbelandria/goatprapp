@@ -41,10 +41,6 @@ export function MediaCapture({ open, onClose, onCapture }: MediaCaptureProps) {
     setError(null);
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: "environment" }, audio: true })
-      .catch(() =>
-        // Fallback: video-only if no microphone or audio denied
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
-      )
       .then((stream) => {
         streamRef.current = stream;
         if (videoRef.current) {
