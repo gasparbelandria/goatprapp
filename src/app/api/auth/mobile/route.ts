@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
     role: (user.role as "user" | "admin") ?? "user",
   });
 
-  // Return JWT in body (mobile can't use cookies)
+  // Return JWT in body — mobile clients can't use HTTP-only cookies
   return NextResponse.json({
     token,
     userId: user.id,
