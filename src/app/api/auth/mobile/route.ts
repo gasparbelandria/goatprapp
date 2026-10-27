@@ -8,6 +8,7 @@ const ALLOWED_CLIENT_IDS = [
   process.env.GOOGLE_CLIENT_ID ?? "",          // AuraRank web client
   process.env.GOOGLE_CLIENT_ID_MOBILE ?? "",   // Firebase web client (fallback)
   process.env.GOOGLE_CLIENT_ID_ANDROID ?? "",  // AuraRank Android client
+  process.env.GOOGLE_CLIENT_ID_SIGNIN ?? "",   // AuraRank native sign-in client
 ].filter(Boolean);
 
 const schema = z.object({
