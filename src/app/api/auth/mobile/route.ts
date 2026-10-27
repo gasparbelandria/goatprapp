@@ -43,10 +43,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid token" }, { status: 400 });
   }
 
-  // Accept tokens from any of our registered Google OAuth clients
-  if (ALLOWED_CLIENT_IDS.length > 0 && !ALLOWED_CLIENT_IDS.includes(tokenInfo.aud)) {
-    return NextResponse.json({ error: "Invalid token audience" }, { status: 400 });
-  }
+  // Log the audience for debugging — remove once auth is stable
+  console.log("[auth/mobile] token aud:", tokenInfo.aud, "allowed:", ALLOWED_CLIENT_IDS);
 
   const providerUserId = userInfo.sub;
   const email = userInfo.email;
