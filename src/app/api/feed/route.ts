@@ -9,7 +9,8 @@ const PAGE_SIZE = 20;
 
 export async function GET(req: NextRequest) {
   const cookieStore = await cookies();
-  const token = cookieStore.get("ar_token")?.value;
+  const bearerToken = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
+  const token = cookieStore.get("ar_token")?.value ?? bearerToken;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let userId: string;

@@ -110,5 +110,7 @@ export async function POST(req: NextRequest) {
     username,
     role: user.role,
     isNewUser: !username,
+    avatarUrl,
+    displayName,
   });
 }
