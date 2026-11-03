@@ -11,7 +11,8 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
-  const token = cookieStore.get("ar_token")?.value;
+  const bearer = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
+  const token = cookieStore.get("ar_token")?.value ?? bearer ?? null;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let userId: string;
@@ -54,7 +55,8 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const cookieStore = await cookies();
-  const token = cookieStore.get("ar_token")?.value;
+  const bearer = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
+  const token = cookieStore.get("ar_token")?.value ?? bearer ?? null;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let userId: string;
