@@ -6,9 +6,10 @@ import { supabase } from "@/lib/supabase";
 import { rateLimit } from "@/lib/rate-limit";
 import { logServerError } from "@/lib/logger";
 
-async function getAuthUserId(): Promise<string | null> {
+async function getAuthUserId(req: NextRequest): Promise<string | null> {
+  const bearerToken = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
   const cookieStore = await cookies();
-  const token = cookieStore.get("ar_token")?.value;
+  const token = bearerToken ?? cookieStore.get("ar_token")?.value ?? null;
   if (!token) return null;
   try { return verifyToken(token).sub; } catch { return null; }
 }
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const userId = await getAuthUserId();
+  const userId = await getAuthUserId(req);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
