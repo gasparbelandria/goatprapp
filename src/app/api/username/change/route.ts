@@ -39,7 +39,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const token = req.cookies.get("ar_token")?.value;
+  const bearer = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
+  const token = req.cookies.get("ar_token")?.value ?? bearer ?? null;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let payload;
