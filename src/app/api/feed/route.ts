@@ -26,7 +26,8 @@ export async function GET(req: NextRequest) {
     .select("following_id")
     .eq("follower_id", userId);
 
-  const feedUserIds = [userId, ...(following ?? []).map((f) => f.following_id)];
+  const followingIds = new Set((following ?? []).map((f) => f.following_id));
+  const feedUserIds = [userId, ...followingIds];
 
   // Fetch recent records:
   // - public records from anyone
@@ -84,6 +85,7 @@ export async function GET(req: NextRequest) {
       recordedAt: r.recorded_at,
       createdAt: r.created_at,
       isOwn: r.user_id === userId,
+      isFollowing: followingIds.has(r.user_id),
       user: {
         username: un.username,
         displayName: un.display_name,

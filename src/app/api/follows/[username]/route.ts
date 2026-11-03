@@ -53,7 +53,8 @@ export async function POST(
   if (!limit.ok) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
   const cookieStore = await cookies();
-  const token = cookieStore.get("ar_token")?.value;
+  const bearerToken = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
+  const token = cookieStore.get("ar_token")?.value ?? bearerToken;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let viewerId: string;
@@ -108,7 +109,8 @@ export async function DELETE(
   { params }: { params: Promise<{ username: string }> }
 ) {
   const cookieStore = await cookies();
-  const token = cookieStore.get("ar_token")?.value;
+  const bearerToken = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
+  const token = cookieStore.get("ar_token")?.value ?? bearerToken;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let viewerId: string;
