@@ -4,9 +4,10 @@ import { verifyToken } from "@/lib/jwt";
 import { supabase } from "@/lib/supabase";
 import { logServerError } from "@/lib/logger";
 
-async function getAuthUserId(): Promise<string | null> {
+async function getAuthUserId(req: NextRequest): Promise<string | null> {
+  const bearer = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
   const cookieStore = await cookies();
-  const token = cookieStore.get("ar_token")?.value;
+  const token = bearer ?? cookieStore.get("ar_token")?.value ?? null;
   if (!token) return null;
   try { return verifyToken(token).sub; } catch { return null; }
 }
@@ -16,7 +17,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const userId = await getAuthUserId();
+  const userId = await getAuthUserId(_req);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Verify ownership before deleting
