@@ -63,22 +63,26 @@ export async function POST(req: NextRequest) {
 
   const { data: existingUser } = await supabase
     .from("pr_users")
-    .select("id, role")
+    .select("id, role, avatar_url")
     .eq("provider", "google")
     .eq("provider_user_id", providerUserId)
     .maybeSingle();
 
   let user: { id: string; role: string } | null = null;
+  let effectiveAvatarUrl: string | null = avatarUrl;
 
   if (existingUser) {
+    // Keep custom avatar if already set; otherwise store Google's photo
+    const avatarUpdate = existingUser.avatar_url ? {} : { avatar_url: avatarUrl };
     const { data, error } = await supabase
       .from("pr_users")
-      .update({ email, display_name: displayName, active: true, last_seen_at: new Date().toISOString() })
+      .update({ email, display_name: displayName, active: true, last_seen_at: new Date().toISOString(), ...avatarUpdate })
       .eq("id", existingUser.id)
-      .select("id, role")
+      .select("id, role, avatar_url")
       .single();
     if (error || !data) return NextResponse.json({ error: "Server error" }, { status: 500 });
-    user = data;
+    user = { id: data.id, role: data.role };
+    effectiveAvatarUrl = data.avatar_url ?? avatarUrl;
   } else {
     const { data, error } = await supabase
       .from("pr_users")
@@ -110,7 +114,7 @@ export async function POST(req: NextRequest) {
     username,
     role: user.role,
     isNewUser: !username,
-    avatarUrl,
+    avatarUrl: effectiveAvatarUrl,
     displayName,
   });
 }
