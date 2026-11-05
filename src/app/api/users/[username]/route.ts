@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/jwt";
 import { supabase } from "@/lib/supabase";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ username: string }> }
 ) {
   const { username } = await params;
   const clean = username.replace(/^@/, "").toLowerCase();
+
+  const cookieStore = await cookies();
+  const bearer = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
+  const rawToken = cookieStore.get("ar_token")?.value ?? bearer ?? null;
+  let viewerId: string | null = null;
+  if (rawToken) {
+    try { viewerId = verifyToken(rawToken).sub; } catch { /* anon */ }
+  }
 
   const { data: usernameRow } = await supabase
     .from("pr_usernames")
@@ -60,6 +70,17 @@ export async function GET(
   const rawSchool = userSchool?.pr_schools;
   const school = (Array.isArray(rawSchool) ? rawSchool[0] : rawSchool) as SchoolRow | null ?? null;
 
+  let isFollowing: boolean | null = null;
+  if (viewerId && viewerId !== usernameRow.user_id) {
+    const { data: followRow } = await supabase
+      .from("pr_follows")
+      .select("follower_id")
+      .eq("follower_id", viewerId)
+      .eq("following_id", usernameRow.user_id)
+      .maybeSingle();
+    isFollowing = !!followRow;
+  }
+
   return NextResponse.json({
     id: usernameRow.user_id,
     username: usernameRow.username,
@@ -83,5 +104,6 @@ export async function GET(
     followersCount: followersCount ?? 0,
     followingCount: followingCount ?? 0,
     joinedAt: usernameRow.claimed_at,
+    isFollowing,
   });
 }

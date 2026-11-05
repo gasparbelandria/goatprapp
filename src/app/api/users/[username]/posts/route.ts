@@ -24,7 +24,8 @@ export async function GET(
 
   // Determine visibility
   const cookieStore = await cookies();
-  const token = cookieStore.get("ar_token")?.value;
+  const bearer = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
+  const token = cookieStore.get("ar_token")?.value ?? bearer ?? null;
   let viewerId: string | null = null;
   if (token) {
     try { viewerId = verifyToken(token).sub; } catch { /* anon */ }
@@ -34,13 +35,14 @@ export async function GET(
   if (viewerId === usernameRow.user_id) {
     visFilter = ["public", "friends", "private"];
   } else if (viewerId) {
-    const { data: follow } = await supabase
-      .from("pr_follows")
-      .select("follower_id")
-      .eq("follower_id", viewerId)
-      .eq("following_id", usernameRow.user_id)
-      .maybeSingle();
-    visFilter = follow ? ["public", "friends"] : ["public"];
+    // "friends" visibility requires mutual follow (both follow each other)
+    const [{ data: viewerFollowsTarget }, { data: targetFollowsViewer }] = await Promise.all([
+      supabase.from("pr_follows").select("follower_id")
+        .eq("follower_id", viewerId).eq("following_id", usernameRow.user_id).maybeSingle(),
+      supabase.from("pr_follows").select("follower_id")
+        .eq("follower_id", usernameRow.user_id).eq("following_id", viewerId).maybeSingle(),
+    ]);
+    visFilter = (viewerFollowsTarget && targetFollowsViewer) ? ["public", "friends"] : ["public"];
   } else {
     visFilter = ["public"];
   }

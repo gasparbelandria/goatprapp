@@ -27,15 +27,28 @@ export async function GET(req: NextRequest) {
     .eq("follower_id", userId);
 
   const followingIds = new Set((following ?? []).map((f) => f.following_id));
-  const feedUserIds = [userId, ...followingIds];
+
+  // "friends" visibility requires mutual follow — find which followed users also follow back
+  let mutualFollowIds: Set<string> = new Set();
+  if (followingIds.size > 0) {
+    const { data: mutualFollows } = await supabase
+      .from("pr_follows")
+      .select("follower_id")
+      .eq("following_id", userId)
+      .in("follower_id", [...followingIds]);
+    mutualFollowIds = new Set((mutualFollows ?? []).map((f) => f.follower_id));
+  }
+
+  // "friends" posts visible only from mutual follows (+ self)
+  const friendFeedIds = [userId, ...mutualFollowIds];
 
   // Fetch recent records:
-  // - public records from anyone
-  // - friends records only from followed users (+ self)
+  // - public records from anyone in the feed
+  // - friends records only from mutual follows (+ self)
   let recQuery = supabase
     .from("pr_records")
     .select("id, value, unit, notes, media_url, media_type, verification_status, recorded_at, visibility, created_at, user_id, exercise_id")
-    .or(`visibility.eq.public,and(visibility.eq.friends,user_id.in.(${feedUserIds.join(",")}))`)
+    .or(`visibility.eq.public,and(visibility.eq.friends,user_id.in.(${friendFeedIds.join(",")}))`)
     .order("created_at", { ascending: false })
     .limit(PAGE_SIZE);
 
