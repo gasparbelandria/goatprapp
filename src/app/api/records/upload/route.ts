@@ -31,9 +31,10 @@ const EXT_MAP: Record<string, string> = {
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;  // 10 MB
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;  // 50 MB
 
-async function getAuthUserId(): Promise<string | null> {
+async function getAuthUserId(req: NextRequest): Promise<string | null> {
+  const bearer = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
   const cookieStore = await cookies();
-  const token = cookieStore.get("ar_token")?.value;
+  const token = bearer ?? cookieStore.get("ar_token")?.value ?? null;
   if (!token) return null;
   try { return verifyToken(token).sub; } catch { return null; }
 }
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const userId = await getAuthUserId();
+  const userId = await getAuthUserId(req);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let formData: FormData;
