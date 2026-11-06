@@ -49,3 +49,7 @@ CLAUDE.md
 memory/
 db/
 docs/
+.claude/
+
+# Internal
+DesignDocument/
