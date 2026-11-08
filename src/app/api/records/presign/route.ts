@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { verifyToken } from "@/lib/jwt";
-import { supabase } from "@/lib/supabase";
 import { rateLimit } from "@/lib/rate-limit";
 
 const ALLOWED_TYPES: Record<string, "image" | "video"> = {
@@ -25,6 +26,15 @@ const EXT_MAP: Record<string, string> = {
   "video/quicktime": "mov",
   "video/webm": "webm",
 };
+
+const r2 = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+  },
+});
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
@@ -62,21 +72,20 @@ export async function POST(req: NextRequest) {
   const ext = EXT_MAP[mimeType] ?? "bin";
   const path = `records/${userId}/${Date.now()}-${randomUUID()}.${ext}`;
 
-  const { data, error } = await supabase.storage
-    .from("pr-media")
-    .createSignedUploadUrl(path);
+  const command = new PutObjectCommand({
+    Bucket: process.env.R2_BUCKET_NAME!,
+    Key: path,
+    ContentType: mimeType,
+  });
 
-  if (error || !data) {
+  let signedUrl: string;
+  try {
+    signedUrl = await getSignedUrl(r2, command, { expiresIn: 300 });
+  } catch {
     return NextResponse.json({ error: "Failed to create upload URL" }, { status: 500 });
   }
 
-  const { data: { publicUrl } } = supabase.storage.from("pr-media").getPublicUrl(path);
+  const publicUrl = `${process.env.R2_PUBLIC_URL}/${path}`;
 
-  return NextResponse.json({
-    signedUrl: data.signedUrl,
-    token: data.token,
-    path,
-    publicUrl,
-    mediaType,
-  });
+  return NextResponse.json({ signedUrl, path, publicUrl, mediaType });
 }
