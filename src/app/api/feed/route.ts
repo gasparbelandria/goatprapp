@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
 
   const [{ data: usernames }, { data: users }, { data: exercises }, { data: schools }] = await Promise.all([
     supabase.from("pr_usernames").select("user_id, username, display_name").in("user_id", uniqueUserIds),
-    supabase.from("pr_users").select("id, avatar_url").in("id", uniqueUserIds),
+    supabase.from("pr_users").select("id, avatar_url, display_name").in("id", uniqueUserIds),
     supabase.from("pr_exercises").select("id, name, category, default_unit, direction").in("id", uniqueExIds),
     supabase.from("pr_user_schools").select("user_id, pr_schools(id, name)").in("user_id", uniqueUserIds),
   ]);
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
     const un = unMap.get(r.user_id);
     const uu = uuMap.get(r.user_id);
     const ex = exMap.get(r.exercise_id);
-    if (!un || !ex) return null;
+    if (!ex) return null;
     return {
       id: r.id,
       value: Number(r.value),
@@ -100,8 +100,8 @@ export async function GET(req: NextRequest) {
       isOwn: r.user_id === userId,
       isFollowing: followingIds.has(r.user_id),
       user: {
-        username: un.username,
-        displayName: un.display_name,
+        username: un?.username ?? null,
+        displayName: un?.display_name ?? uu?.display_name ?? null,
         avatarUrl: uu?.avatar_url ?? null,
         schoolName: scMap.get(r.user_id) ?? null,
       },

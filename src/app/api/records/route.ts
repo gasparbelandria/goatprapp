@@ -58,6 +58,24 @@ export async function POST(req: NextRequest) {
 
   if (!exercise) return NextResponse.json({ error: "Exercise not found" }, { status: 404 });
 
+  // A new entry must beat the user's current best for this exercise.
+  const { data: bestRecord } = await supabase
+    .from("pr_records")
+    .select("value")
+    .eq("user_id", userId)
+    .eq("exercise_id", exerciseId)
+    .order("value", { ascending: exercise.direction === "lower" })
+    .limit(1)
+    .maybeSingle();
+
+  if (bestRecord) {
+    const prevBest = Number(bestRecord.value);
+    const isNewPR = exercise.direction === "lower" ? value < prevBest : value > prevBest;
+    if (!isNewPR) {
+      return NextResponse.json({ error: "not_a_pr", best: prevBest }, { status: 400 });
+    }
+  }
+
   const { data: record, error } = await supabase
     .from("pr_records")
     .insert({

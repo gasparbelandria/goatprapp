@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
     Bucket: process.env.R2_BUCKET_NAME!,
     Key: path,
     ContentType: mimeType,
+    CacheControl: "public, max-age=31536000, immutable",
   });
 
   let signedUrl: string;

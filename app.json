@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "cf7dd7cc-7c8d-497f-a6aa-e493b859d4dc"
+      }
+    },
+    "android": {
+      "package": "com.gasparbelandria.goatpr"
+    }
+  }
+}
