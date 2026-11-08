@@ -35,9 +35,11 @@ export async function POST(req: NextRequest) {
 }
 
 // DELETE /api/account/delete — full account deletion
-export async function DELETE(_req: NextRequest) {
+// Accepts both cookie (web) and Bearer token (mobile)
+export async function DELETE(req: NextRequest) {
+  const bearerToken = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
   const cookieStore = await cookies();
-  const token = cookieStore.get("ar_token")?.value;
+  const token = bearerToken ?? cookieStore.get("ar_token")?.value ?? null;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let userId: string;
@@ -63,15 +65,24 @@ export async function DELETE(_req: NextRequest) {
     supabase.from("pr_usernames").delete().eq("user_id", userId),
   ]);
 
-  // 4. Delete user record (must be last — cascades pr_records, pr_challenges, etc.)
-  await supabase.from("pr_users").delete().eq("id", userId);
+  // 4. Delete all PR media files from storage
+  const { data: mediaFiles } = await supabase.storage
+    .from("pr-media")
+    .list(`records/${userId}`);
+  if (mediaFiles && mediaFiles.length > 0) {
+    const paths = mediaFiles.map((f) => `records/${userId}/${f.name}`);
+    await supabase.storage.from("pr-media").remove(paths);
+  }
 
   // 5. Delete avatar from storage (all possible extensions)
   await supabase.storage
     .from("avatars")
     .remove(["jpg", "png", "webp"].map((ext) => `${userId}.${ext}`));
 
-  // 6. Invalidate session cookie
+  // 6. Delete user record (must be last — cascades pr_records, pr_challenges, etc.)
+  await supabase.from("pr_users").delete().eq("id", userId);
+
+  // 7. Invalidate session cookie (web sessions — mobile handles logout client-side)
   cookieStore.set("ar_token", "", {
     httpOnly: true,
     sameSite: "lax",
