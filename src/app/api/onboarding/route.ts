@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   const bearer = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
   if (!bearer) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let payload: { sub: string; role: string };
+  let payload: { sub: string; role: 'user' | 'admin' };
   try { payload = verifyToken(bearer); } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
