@@ -83,36 +83,38 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (!school) return NextResponse.json({ error: "School not found." }, { status: 404 });
 
-  // Check user doesn't already have a username (prevent double onboarding)
+  // 1. Username — skip insert if user already owns one (idempotent)
   const { data: existing } = await supabase
     .from("pr_usernames")
     .select("username")
     .eq("user_id", payload.sub)
     .maybeSingle();
-  if (existing) return NextResponse.json({ error: "Profile already set up." }, { status: 409 });
 
-  // 1. Create username row
-  const { error: unErr } = await supabase
-    .from("pr_usernames")
-    .insert({ user_id: payload.sub, username: handle, display_name: displayName });
-  if (unErr) {
-    if (unErr.code === "23505") return NextResponse.json({ error: "Username taken." }, { status: 409 });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  const finalUsername = existing?.username ?? handle;
+
+  if (!existing) {
+    const { error: unErr } = await supabase
+      .from("pr_usernames")
+      .insert({ user_id: payload.sub, username: handle, display_name: displayName });
+    if (unErr) {
+      if (unErr.code === "23505") return NextResponse.json({ error: "Username taken." }, { status: 409 });
+      return NextResponse.json({ error: "Server error" }, { status: 500 });
+    }
   }
 
-  // 2. Update pr_users: birth_date + display_name
+  // 2. Update pr_users: birth_date + display_name (always)
   await supabase
     .from("pr_users")
     .update({ birth_date: birthDate, display_name: displayName })
     .eq("id", payload.sub);
 
-  // 3. Upsert school
+  // 3. Upsert school (always)
   await supabase
     .from("pr_user_schools")
     .upsert({ user_id: payload.sub, school_id: schoolId }, { onConflict: "user_id" });
 
-  // 4. Issue new JWT with username
-  const newToken = signToken({ sub: payload.sub, username: handle, role: payload.role ?? "user" });
+  // 4. Issue new JWT
+  const newToken = signToken({ sub: payload.sub, username: finalUsername, role: payload.role ?? "user" });
 
-  return NextResponse.json({ token: newToken, username: handle, displayName });
+  return NextResponse.json({ token: newToken, username: finalUsername, displayName });
 }
