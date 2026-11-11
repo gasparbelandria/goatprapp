@@ -24,15 +24,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabase
-    .from("pr_profiles")
-    .select("bio, city, state")
-    .eq("user_id", payload.sub)
-    .maybeSingle();
+  const [{ data, error }, { data: unRow }] = await Promise.all([
+    supabase.from("pr_profiles").select("bio, city, state").eq("user_id", payload.sub).maybeSingle(),
+    supabase.from("pr_usernames").select("username, display_name").eq("user_id", payload.sub).maybeSingle(),
+  ]);
 
   if (error) return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });
 
-  return NextResponse.json(data ?? {});
+  return NextResponse.json({
+    ...(data ?? {}),
+    username: unRow?.username ?? null,
+    displayName: unRow?.display_name ?? null,
+  });
 }
 
 export async function POST(req: NextRequest) {

@@ -94,12 +94,13 @@ export async function POST(req: NextRequest) {
   }
 
   const [{ data: usernameRow }, { data: schoolRow }, { data: userData }] = await Promise.all([
-    supabase.from("pr_usernames").select("username").eq("user_id", user.id).maybeSingle(),
+    supabase.from("pr_usernames").select("username, display_name").eq("user_id", user.id).maybeSingle(),
     supabase.from("pr_user_schools").select("school_id").eq("user_id", user.id).maybeSingle(),
     supabase.from("pr_users").select("birth_date").eq("id", user.id).maybeSingle(),
   ]);
 
   const username = usernameRow?.username ?? null;
+  const customDisplayName = usernameRow?.display_name ?? null;
   const needsOnboarding = !username || !schoolRow || !(userData as any)?.birth_date;
 
   const token = signToken({
@@ -116,6 +117,6 @@ export async function POST(req: NextRequest) {
     role: user.role,
     isNewUser: needsOnboarding,
     avatarUrl: effectiveAvatarUrl,
-    displayName,
+    displayName: customDisplayName ?? displayName,
   });
 }
