@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
   // Check school exists
   const { data: school } = await supabase
     .from("pr_schools")
-    .select("id")
+    .select("id, city, state")
     .eq("id", schoolId)
     .eq("status", "active")
     .maybeSingle();
@@ -112,6 +112,14 @@ export async function POST(req: NextRequest) {
   await supabase
     .from("pr_user_schools")
     .upsert({ user_id: payload.sub, school_id: schoolId }, { onConflict: "user_id" });
+
+  // 4. Upsert pr_profiles with school's city/state (creates entry for edit-profile pre-population)
+  await supabase
+    .from("pr_profiles")
+    .upsert(
+      { user_id: payload.sub, city: school.city ?? null, state: school.state ?? null, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" }
+    );
 
   // 4. Issue new JWT
   const newToken = signToken({ sub: payload.sub, username: finalUsername, role: payload.role ?? "user" });

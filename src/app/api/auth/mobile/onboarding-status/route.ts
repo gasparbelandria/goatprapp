@@ -11,13 +11,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [{ data: usernameRow }, { data: schoolRow }, { data: userData }] = await Promise.all([
+  const [{ data: usernameRow }, { data: schoolRow }] = await Promise.all([
     supabase.from("pr_usernames").select("username").eq("user_id", payload.sub).maybeSingle(),
     supabase.from("pr_user_schools").select("school_id").eq("user_id", payload.sub).maybeSingle(),
-    supabase.from("pr_users").select("birth_date").eq("id", payload.sub).maybeSingle(),
   ]);
 
-  const needsOnboarding = !usernameRow?.username || !schoolRow || !(userData as any)?.birth_date;
+  const needsOnboarding = !usernameRow?.username || !schoolRow;
 
   return NextResponse.json({ needsOnboarding });
 }
