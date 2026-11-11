@@ -66,13 +66,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Username not available." }, { status: 409 });
   }
 
-  // Check username not taken
+  // Check username not taken (allow re-use of own username)
   const { data: taken } = await supabase
     .from("pr_usernames")
-    .select("username")
+    .select("username, user_id")
     .eq("username", handle)
     .maybeSingle();
-  if (taken) return NextResponse.json({ error: "Username taken." }, { status: 409 });
+  if (taken && taken.user_id !== payload.sub) {
+    return NextResponse.json({ error: "Username taken." }, { status: 409 });
+  }
 
   // Check school exists
   const { data: school } = await supabase
@@ -100,6 +102,11 @@ export async function POST(req: NextRequest) {
       if (unErr.code === "23505") return NextResponse.json({ error: "Username taken." }, { status: 409 });
       return NextResponse.json({ error: "Server error" }, { status: 500 });
     }
+  } else {
+    await supabase
+      .from("pr_usernames")
+      .update({ display_name: displayName })
+      .eq("user_id", payload.sub);
   }
 
   // 2. Update pr_users: birth_date + display_name (always)
@@ -109,9 +116,12 @@ export async function POST(req: NextRequest) {
     .eq("id", payload.sub);
 
   // 3. Upsert school (always)
-  await supabase
+  const { error: schoolErr } = await supabase
     .from("pr_user_schools")
     .upsert({ user_id: payload.sub, school_id: schoolId }, { onConflict: "user_id" });
+  if (schoolErr) {
+    return NextResponse.json({ error: "Failed to save school. Please try again." }, { status: 500 });
+  }
 
   // 4. Upsert pr_profiles with school's city/state (creates entry for edit-profile pre-population)
   await supabase
