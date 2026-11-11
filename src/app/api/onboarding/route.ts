@@ -115,10 +115,11 @@ export async function POST(req: NextRequest) {
     .update({ birth_date: birthDate, display_name: displayName })
     .eq("id", payload.sub);
 
-  // 3. Upsert school (always)
+  // 3. Save school — delete existing then insert (avoids upsert constraint issues)
+  await supabase.from("pr_user_schools").delete().eq("user_id", payload.sub);
   const { error: schoolErr } = await supabase
     .from("pr_user_schools")
-    .upsert({ user_id: payload.sub, school_id: schoolId }, { onConflict: "user_id" });
+    .insert({ user_id: payload.sub, school_id: schoolId });
   if (schoolErr) {
     return NextResponse.json({ error: "Failed to save school. Please try again." }, { status: 500 });
   }
