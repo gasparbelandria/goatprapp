@@ -11,10 +11,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [{ data: usernameRow }, { data: schoolRow }] = await Promise.all([
+  const [{ data: userRow }, { data: usernameRow }, { data: schoolRow }] = await Promise.all([
+    supabase.from("pr_users").select("id").eq("id", payload.sub).maybeSingle(),
     supabase.from("pr_usernames").select("username").eq("user_id", payload.sub).maybeSingle(),
     supabase.from("pr_user_schools").select("school_id").eq("user_id", payload.sub).maybeSingle(),
   ]);
+
+  if (!userRow) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   const needsOnboarding = !usernameRow?.username || !schoolRow;
 
