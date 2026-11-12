@@ -48,41 +48,36 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Most child records cascade automatically via ON DELETE CASCADE in the schema.
-  // We handle explicit deletions here for storage cleanup and tables without CASCADE.
+  // Collect all R2 URLs before any DB deletions — rows may cascade away mid-sequence.
+  const [{ data: mediaRecords }, { data: unRow }] = await Promise.all([
+    supabase.from("pr_records").select("media_url").eq("user_id", userId).not("media_url", "is", null),
+    supabase.from("pr_usernames").select("avatar_url, banner_url").eq("user_id", userId).maybeSingle(),
+  ]);
+  const r2Urls = [
+    ...(mediaRecords ?? []).map((r) => r.media_url),
+    unRow?.avatar_url,
+    unRow?.banner_url,
+  ];
 
-  // 1. Delete all follow relationships
+  // 1. Delete R2 media (before DB rows — idempotent if it fails)
+  await deleteR2Objects(r2Urls);
+
+  // 2. Delete all follow relationships
   await supabase
     .from("pr_follows")
     .delete()
     .or(`follower_id.eq.${userId},following_id.eq.${userId}`);
 
-  // 2. Delete user's notifications
+  // 3. Delete user's notifications
   await supabase.from("pr_notifications").delete().eq("user_id", userId);
 
-  // 3. Delete profile and username (in parallel)
+  // 4. Delete profile and username
   await Promise.all([
     supabase.from("pr_profiles").delete().eq("user_id", userId),
     supabase.from("pr_usernames").delete().eq("user_id", userId),
   ]);
 
-  // 4. Delete all PR media files from R2
-  const { data: mediaRecords } = await supabase
-    .from("pr_records")
-    .select("media_url")
-    .eq("user_id", userId)
-    .not("media_url", "is", null);
-  await deleteR2Objects((mediaRecords ?? []).map((r) => r.media_url));
-
-  // 5. Delete avatar from R2 (pr_usernames.avatar_url)
-  const { data: unRow } = await supabase
-    .from("pr_usernames")
-    .select("avatar_url")
-    .eq("user_id", userId)
-    .maybeSingle();
-  await deleteR2Objects([unRow?.avatar_url]);
-
-  // 6. Delete user record (must be last — cascades pr_records, pr_challenges, etc.)
+  // 5. Delete user record (must be last — cascades pr_records, pr_challenges, etc.)
   await supabase.from("pr_users").delete().eq("id", userId);
 
   // 7. Invalidate session cookie (web sessions — mobile handles logout client-side)
