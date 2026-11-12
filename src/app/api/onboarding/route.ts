@@ -109,10 +109,10 @@ export async function POST(req: NextRequest) {
       .eq("user_id", payload.sub);
   }
 
-  // 2. Update pr_users: birth_date + display_name (always)
+  // 2. Update pr_users: birth_date only — display_name is immutable (OAuth snapshot)
   await supabase
     .from("pr_users")
-    .update({ birth_date: birthDate, display_name: displayName })
+    .update({ birth_date: birthDate })
     .eq("id", payload.sub);
 
   // 3. Save school — delete existing then insert (avoids upsert constraint issues)
