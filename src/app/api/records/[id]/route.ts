@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/jwt";
 import { supabase } from "@/lib/supabase";
 import { logServerError } from "@/lib/logger";
+import { deleteR2Object } from "@/lib/r2";
 
 async function getAuthUserId(req: NextRequest): Promise<string | null> {
   const bearer = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
@@ -20,10 +21,10 @@ export async function DELETE(
   const userId = await getAuthUserId(_req);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify ownership before deleting
+  // Fetch record including media_url for R2 cleanup
   const { data: record } = await supabase
     .from("pr_records")
-    .select("user_id")
+    .select("user_id, media_url")
     .eq("id", id)
     .maybeSingle();
 
@@ -35,6 +36,9 @@ export async function DELETE(
     void logServerError("pr_records delete error", { message: error.message, section: "records" });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
+
+  // Delete media from R2 after DB record is gone
+  await deleteR2Object(record.media_url);
 
   return NextResponse.json({ ok: true });
 }

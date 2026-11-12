@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/jwt";
 import { supabase } from "@/lib/supabase";
+import { deleteR2Objects } from "@/lib/r2";
 
 async function resolveUserId(): Promise<string | null> {
   const cookieStore = await cookies();
@@ -65,19 +66,21 @@ export async function DELETE(req: NextRequest) {
     supabase.from("pr_usernames").delete().eq("user_id", userId),
   ]);
 
-  // 4. Delete all PR media files from storage
-  const { data: mediaFiles } = await supabase.storage
-    .from("pr-media")
-    .list(`records/${userId}`);
-  if (mediaFiles && mediaFiles.length > 0) {
-    const paths = mediaFiles.map((f) => `records/${userId}/${f.name}`);
-    await supabase.storage.from("pr-media").remove(paths);
-  }
+  // 4. Delete all PR media files from R2
+  const { data: mediaRecords } = await supabase
+    .from("pr_records")
+    .select("media_url")
+    .eq("user_id", userId)
+    .not("media_url", "is", null);
+  await deleteR2Objects((mediaRecords ?? []).map((r) => r.media_url));
 
-  // 5. Delete avatar from storage (all possible extensions)
-  await supabase.storage
-    .from("avatars")
-    .remove(["jpg", "png", "webp"].map((ext) => `${userId}.${ext}`));
+  // 5. Delete avatar from R2 (pr_usernames.avatar_url)
+  const { data: unRow } = await supabase
+    .from("pr_usernames")
+    .select("avatar_url")
+    .eq("user_id", userId)
+    .maybeSingle();
+  await deleteR2Objects([unRow?.avatar_url]);
 
   // 6. Delete user record (must be last — cascades pr_records, pr_challenges, etc.)
   await supabase.from("pr_users").delete().eq("id", userId);
