@@ -37,6 +37,14 @@ const r2 = new S3Client({
 });
 
 export async function POST(req: NextRequest) {
+  // Fail fast if R2 is not configured — prevents cryptic errors downstream
+  if (!process.env.R2_ACCOUNT_ID || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_BUCKET_NAME || !process.env.R2_PUBLIC_URL) {
+    const missing = ["R2_ACCOUNT_ID","R2_ACCESS_KEY_ID","R2_SECRET_ACCESS_KEY","R2_BUCKET_NAME","R2_PUBLIC_URL"]
+      .filter(k => !process.env[k]).join(", ");
+    console.error(`[presign] Missing R2 env vars: ${missing}`);
+    return NextResponse.json({ error: `Storage not configured (missing: ${missing})` }, { status: 500 });
+  }
+
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
   const limit = rateLimit(`records-presign:${ip}`, 20, 60 * 60 * 1000);
   if (!limit.ok) {
@@ -82,8 +90,10 @@ export async function POST(req: NextRequest) {
   let signedUrl: string;
   try {
     signedUrl = await getSignedUrl(r2, command, { expiresIn: 300 });
-  } catch {
-    return NextResponse.json({ error: "Failed to create upload URL" }, { status: 500 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[presign] getSignedUrl failed:", msg);
+    return NextResponse.json({ error: `Failed to create upload URL: ${msg}` }, { status: 500 });
   }
 
   const publicUrl = `${process.env.R2_PUBLIC_URL}/${path}`;
