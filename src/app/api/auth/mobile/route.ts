@@ -69,21 +69,19 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   let user: { id: string; role: string } | null = null;
-  let effectiveAvatarUrl: string | null = avatarUrl;
 
   if (existingUser) {
-    // Keep custom avatar if already set; otherwise store Google's photo
-    const avatarUpdate = existingUser.avatar_url ? {} : { avatar_url: avatarUrl };
+    // pr_users is immutable after initial insert — only update session fields
     const { data, error } = await supabase
       .from("pr_users")
-      .update({ email, display_name: displayName, active: true, last_seen_at: new Date().toISOString(), ...avatarUpdate })
+      .update({ email, active: true, last_seen_at: new Date().toISOString() })
       .eq("id", existingUser.id)
-      .select("id, role, avatar_url")
+      .select("id, role")
       .single();
     if (error || !data) return NextResponse.json({ error: "Server error" }, { status: 500 });
     user = { id: data.id, role: data.role };
-    effectiveAvatarUrl = data.avatar_url ?? avatarUrl;
   } else {
+    // New user — snapshot OAuth data into pr_users once
     const { data, error } = await supabase
       .from("pr_users")
       .insert({ provider: "google", provider_user_id: providerUserId, email, display_name: displayName, avatar_url: avatarUrl, active: true })
@@ -94,13 +92,16 @@ export async function POST(req: NextRequest) {
   }
 
   const [{ data: usernameRow }, { data: schoolRow }, { data: userData }] = await Promise.all([
-    supabase.from("pr_usernames").select("username, display_name").eq("user_id", user.id).maybeSingle(),
+    supabase.from("pr_usernames").select("username, display_name, avatar_url").eq("user_id", user.id).maybeSingle(),
     supabase.from("pr_user_schools").select("school_id").eq("user_id", user.id).maybeSingle(),
-    supabase.from("pr_users").select("birth_date").eq("id", user.id).maybeSingle(),
+    supabase.from("pr_users").select("birth_date, avatar_url").eq("id", user.id).maybeSingle(),
   ]);
 
   const username = usernameRow?.username ?? null;
   const customDisplayName = usernameRow?.display_name ?? null;
+  const customAvatarUrl = usernameRow?.avatar_url ?? null;
+  // pr_usernames.avatar_url takes priority; fall back to pr_users.avatar_url (Google)
+  const resolvedAvatarUrl = customAvatarUrl ?? (userData as any)?.avatar_url ?? avatarUrl;
   const needsOnboarding = !username || !schoolRow || !(userData as any)?.birth_date;
 
   const token = signToken({
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
     username,
     role: user.role,
     isNewUser: needsOnboarding,
-    avatarUrl: effectiveAvatarUrl,
+    avatarUrl: resolvedAvatarUrl,
     displayName: customDisplayName ?? displayName,
   });
 }

@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
   const [{ data, error }, { data: unRow }] = await Promise.all([
     supabase.from("pr_profiles").select("bio, city, state").eq("user_id", payload.sub).maybeSingle(),
-    supabase.from("pr_usernames").select("username, display_name").eq("user_id", payload.sub).maybeSingle(),
+    supabase.from("pr_usernames").select("username, display_name, avatar_url").eq("user_id", payload.sub).maybeSingle(),
   ]);
 
   if (error) return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });
@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
     ...(data ?? {}),
     username: unRow?.username ?? null,
     displayName: unRow?.display_name ?? null,
+    avatarUrl: unRow?.avatar_url ?? null,
   });
 }
 

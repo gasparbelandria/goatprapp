@@ -75,9 +75,9 @@ export async function POST(req: NextRequest) {
   const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
 
   const { error: dbError } = await supabase
-    .from("pr_users")
+    .from("pr_usernames")
     .update({ avatar_url: publicUrl })
-    .eq("id", payload.sub);
+    .eq("user_id", payload.sub);
 
   if (dbError) {
     void logServerError("Avatar DB update error", { message: dbError.message, section: "profile" });
