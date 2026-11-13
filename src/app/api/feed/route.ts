@@ -74,16 +74,35 @@ export async function GET(req: NextRequest) {
   const uniqueUserIds = [...new Set(rows.map((r) => r.user_id))];
   const uniqueExIds = [...new Set(rows.map((r) => r.exercise_id))];
 
-  const [{ data: usernames }, { data: users }, { data: exercises }, { data: schools }] = await Promise.all([
+  const feedPairSet = new Set(rows.map((r) => `${r.user_id}:${r.exercise_id}`));
+
+  const [{ data: usernames }, { data: users }, { data: exercises }, { data: schools }, { data: historyRecords }] = await Promise.all([
     supabase.from("pr_usernames").select("user_id, username, display_name, avatar_url").in("user_id", uniqueUserIds),
     supabase.from("pr_users").select("id, avatar_url").in("id", uniqueUserIds),
     supabase.from("pr_exercises").select("id, name, category, default_unit, direction").in("id", uniqueExIds),
     supabase.from("pr_user_schools").select("user_id, pr_schools(id, name)").in("user_id", uniqueUserIds),
+    // Fetch full record history for each feed item's (user, exercise) pair so the
+    // client can render a progress sparkline. Filtered to our exact pairs below.
+    supabase
+      .from("pr_records")
+      .select("user_id, exercise_id, value, recorded_at")
+      .in("user_id", uniqueUserIds)
+      .in("exercise_id", uniqueExIds)
+      .order("recorded_at", { ascending: true }),
   ]);
 
   const unMap = new Map((usernames ?? []).map((u) => [u.user_id, u]));
   const uuMap = new Map((users ?? []).map((u) => [u.id, u]));
   const exMap = new Map((exercises ?? []).map((e) => [e.id, e]));
+
+  // Group history records by "userId:exerciseId", keeping only feed pairs
+  const histMap = new Map<string, Array<{ value: number; recordedAt: string }>>();
+  for (const h of historyRecords ?? []) {
+    const key = `${h.user_id}:${h.exercise_id}`;
+    if (!feedPairSet.has(key)) continue;
+    if (!histMap.has(key)) histMap.set(key, []);
+    histMap.get(key)!.push({ value: Number(h.value), recordedAt: h.recorded_at });
+  }
 
   type SchRow = { user_id: string; pr_schools: { id: string; name: string } | { id: string; name: string }[] | null };
   const scMap = new Map<string, string | null>();
@@ -122,6 +141,7 @@ export async function GET(req: NextRequest) {
         defaultUnit: ex.default_unit,
         direction: ex.direction,
       },
+      history: histMap.get(`${r.user_id}:${r.exercise_id}`) ?? [],
     };
   }).filter(Boolean);
 
