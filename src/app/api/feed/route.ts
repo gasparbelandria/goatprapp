@@ -7,6 +7,21 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;
 
+type FeedRow = {
+  id: string;
+  value: number;
+  unit: string;
+  notes: string | null;
+  media_url: string | null;
+  media_type: string | null;
+  verification_status: string;
+  recorded_at: string;
+  visibility: string;
+  created_at: string;
+  user_id: string;
+  exercise_id: string;
+};
+
 export async function GET(req: NextRequest) {
   const cookieStore = await cookies();
   const bearerToken = req.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
@@ -39,22 +54,17 @@ export async function GET(req: NextRequest) {
     mutualFollowIds = new Set((mutualFollows ?? []).map((f) => f.follower_id));
   }
 
-  // "friends" posts visible only from mutual follows (+ self)
+  // Self + mutual follows can see each other's 'friends' posts
   const friendFeedIds = [userId, ...mutualFollowIds];
 
-  // Fetch recent records:
-  // - public records from anyone in the feed
-  // - friends records only from mutual follows (+ self)
-  let recQuery = supabase
-    .from("pr_records")
-    .select("id, value, unit, notes, media_url, media_type, verification_status, recorded_at, visibility, created_at, user_id, exercise_id")
-    .or(`visibility.eq.public,and(visibility.eq.friends,user_id.in.(${friendFeedIds.join(",")}))`)
-    .order("created_at", { ascending: false })
-    .limit(PAGE_SIZE);
+  // Call the get_feed SQL function which uses DISTINCT ON to return only the
+  // personal record (best value) per user+exercise, paginated by created_at.
+  const { data: records, error } = await supabase.rpc("get_feed", {
+    p_friend_ids: friendFeedIds,
+    p_cursor: cursor ?? null,
+    p_limit: PAGE_SIZE,
+  }) as { data: FeedRow[] | null; error: unknown };
 
-  if (cursor) recQuery = recQuery.lt("created_at", cursor);
-
-  const { data: records, error } = await recQuery;
   if (error) return NextResponse.json({ error: "Server error" }, { status: 500 });
 
   const rows = records ?? [];
